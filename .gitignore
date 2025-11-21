@@ -1,0 +1,11 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Others you might not want
+*.log
+*.swp
+.DS_Store
+.ipynb_checkpoints/
+
