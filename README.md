@@ -8,12 +8,12 @@ _Example: plagiarize Elon Musk portrait_
 # Plagiarism Attack:
 ## For visible watemark, add large semantic alteration, 
 <pre>
-python optimize_latent_images_folder.py --target_folder YOUR_IMAGES_DIR_TO_BE_ATTACKED --gen_seed 0 --start 0 --end 1000 --gpu 0 --start_step 15 --k 25 45 --eps 10 --iters 10 --output_folder YOU_OUTPUT_DIR
+python run_attack.py --target_folder YOUR_IMAGES_DIR_TO_BE_ATTACKED --gen_seed 0 --start 0 --end 1000 --gpu 0 --start_step 20 --k 25 --eps 10 --iters 10 --output_folder YOU_OUTPUT_DIR
 </pre>
 
 ## For invisible watermark, add small unnoticeable noise,
 <pre>
-python optimize_latent_images_folder.py --target_folder YOUR_IMAGES_DIR_TO_BE_ATTACKED --gen_seed 0 --start 0 --end 1000 --gpu 0 --start_step 45 --k 47 --eps 10 --iters 10 --noisy_start --output_folder YOU_OUTPUT_DIR
+python run_attack.py --target_folder YOUR_IMAGES_DIR_TO_BE_ATTACKED --gen_seed 0 --start 0 --end 1000 --gpu 0 --start_step 45 --k 47 --eps 10 --iters 10 --noisy_start --output_folder YOU_OUTPUT_DIR
 </pre>
 
 # **Citation:**
