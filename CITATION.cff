@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: If you use this implementation or build on its research findings, please
+  cite the paper below.
+type: software
+title: 'Neural-Plagiarism: Research Code'
+authors: &id001
+- family-names: Zou
+  given-names: Zihang
+- family-names: Gong
+  given-names: Boqing
+- family-names: Wang
+  given-names: Liqiang
+repository-code: https://github.com/zzzucf/Neural-Plagiarism
+url: https://openaccess.thecvf.com/content/ICCV2025/html/Zou_Attention_to_Neural_Plagiarism_Diffusion_Models_Can_Plagiarize_Your_Copyrighted_ICCV_2025_paper.html
+keywords:
+- diffusion models
+- neural plagiarism
+- image copyright protection
+- watermark robustness
+- computer vision
+preferred-citation:
+  type: conference-paper
+  authors: *id001
+  title: 'Attention to Neural Plagiarism: Diffusion Models Can Plagiarize Your Copyrighted
+    Images!'
+  collection-title: Proceedings of the IEEE/CVF International Conference on Computer
+    Vision (ICCV)
+  year: 2025
+  start: '19546'
+  end: '19556'
+  doi: 10.1109/ICCV51701.2025.01817
+  url: https://openaccess.thecvf.com/content/ICCV2025/html/Zou_Attention_to_Neural_Plagiarism_Diffusion_Models_Can_Plagiarize_Your_Copyrighted_ICCV_2025_paper.html

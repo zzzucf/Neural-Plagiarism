@@ -1,48 +1,62 @@
-# Neural Plagiarism
-Official Implementation of ICCV 2025 paper _"Attention to Neural Plagiarism: Diffusion Models Can Plagiarize Your Copyrighted Images!"_. 
+# Neural Plagiarism — ICCV 2025
 
-[[ICCV Page](https://openaccess.thecvf.com/content/ICCV2025/html/Zou_Attention_to_Neural_Plagiarism_Diffusion_Models_Can_Plagiarize_Your_Copyrighted_ICCV_2025_paper.html)][[Poster](https://github.com/zzzucf/Neural-Plagiarism/blob/main/images/iccv25_poster_neural_plagiarism.png)]
+Official implementation of **Attention to Neural Plagiarism: Diffusion Models Can Plagiarize Your Copyrighted Images!**
 
-# **Citation:**
-<pre>
-@InProceedings{Zou_2025_ICCV,
-    author    = {Zou, Zihang and Gong, Boqing and Wang, Liqiang},
-    title     = {Attention to Neural Plagiarism: Diffusion Models Can Plagiarize Your Copyrighted Images!},
-    booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
-    month     = {October},
-    year      = {2025},
-    pages     = {19546-19556}
+**[Zihang Zou](https://scholar.google.com/citations?user=GLuGAK0AAAAJ&hl=en), Boqing Gong, and Liqiang Wang** · ICCV 2025 · pp. 19546–19556
+
+[Paper](https://openaccess.thecvf.com/content/ICCV2025/html/Zou_Attention_to_Neural_Plagiarism_Diffusion_Models_Can_Plagiarize_Your_Copyrighted_ICCV_2025_paper.html) · [Open-access PDF](https://openaccess.thecvf.com/content/ICCV2025/papers/Zou_Attention_to_Neural_Plagiarism_Diffusion_Models_Can_Plagiarize_Your_Copyrighted_ICCV_2025_paper.pdf) · [DOI](https://doi.org/10.1109/ICCV51701.2025.01817) · [Poster](images/iccv25_poster_neural_plagiarism.png) · [BibTeX](citation.bib)
+
+## Research overview
+
+How robust are image copyright protections when images are processed by diffusion models? This work studies **neural plagiarism**: producing semantically similar versions of copyrighted images that evade visible or invisible copyright markers.
+
+The method uses inverse latents as anchors and optimized perturbations as shims. Perturbing cross-attention at selected diffusion timesteps changes the image's semantic content to different degrees. The approach uses gradient-based optimization without additional model training or fine-tuning. The paper evaluates the method on MS-COCO and real-world copyrighted images.
+
+This work is relevant to research on diffusion models, image copyright protection, watermark robustness, and evaluation of generative AI. See the paper for the threat model, experimental settings, results, and limitations.
+
+![Anchor-and-shim pipeline for studying copyright-marker robustness in diffusion models](images/attack_pipeline.png)
+
+## Code and experiments
+
+| File | Purpose |
+| --- | --- |
+| [run_attack.py](run_attack.py) | Experiment entry point and command-line arguments |
+| [attack_stable_diffusion.py](attack_stable_diffusion.py) | Attack pipeline |
+| [inverse_stable_diffusion.py](inverse_stable_diffusion.py) | Diffusion inversion pipeline |
+| [modified_stable_diffusion.py](modified_stable_diffusion.py) | Modified diffusion components |
+| [requirements.txt](requirements.txt) | Recorded Python dependencies |
+| [samples](samples) | Example input image |
+
+Review the pinned dependencies and your PyTorch/CUDA environment before installation. After dependencies are installed, inspect the available arguments with:
+
+```bash
+python run_attack.py --help
+```
+
+The current entry point is `run_attack.py`. Older README examples referenced `optimize_latent_images_folder.py` and a `--noisy_start` flag; neither is present in this checkout. Consult the current argument definitions and the paper when configuring an experiment. This documentation update does not establish a fully validated reproduction environment.
+
+![Example images from the neural plagiarism experiment](images/elon100.jpg)
+
+## Citation
+
+If you build on the method, use the code, or discuss the findings, please cite the published ICCV paper:
+
+```bibtex
+@inproceedings{Zou_2025_ICCV,
+  author = {Zou, Zihang and Gong, Boqing and Wang, Liqiang},
+  title = {Attention to Neural Plagiarism: Diffusion Models Can Plagiarize Your Copyrighted Images!},
+  booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
+  year = {2025},
+  pages = {19546--19556},
+  doi = {10.1109/ICCV51701.2025.01817},
+  url = {https://openaccess.thecvf.com/content/ICCV2025/html/Zou_Attention_to_Neural_Plagiarism_Diffusion_Models_Can_Plagiarize_Your_Copyrighted_ICCV_2025_paper.html}
 }
-</pre>
+```
 
-# Plagiarism Attack:
-Our plagiarism attack is a **general, training-free, untargeted** attack on copyrighted data. It exploits the attention mechanisms underlying advanced neural models to remove copyright markers, ranging from **invisible watermarks** to **visible signatures**.
+Machine-readable citation metadata is available in [CITATION.cff](CITATION.cff), with the paper as the preferred citation, and in [citation.bib](citation.bib).
 
-_Example: plagiarize Elon Musk portrait_
+## Related research
 
-These attacked images resemble Elon Musk, but none of these can be him without complicated facial surgery or genetic engineering :)
+[Anti-Neuron Watermarking (ECCV 2022)](https://github.com/zzzucf/anti-neuron-watermarking) studies verification of unauthorized use of personal images in neural network training. Neural Plagiarism studies the robustness of image copyright markers under diffusion-based transformations.
 
-<p align="center">
-  <img src="https://github.com/zzzucf/Neural-Plagiarism/blob/main/images/elon100.jpg?raw=true" width="50%">
-</p>
-
-**Attack pipeline:**
-Our attack adds shims to anchor variable to diverge the trajectory of the copyrighted data and introduce different level of semantic alterations to bypass copyright protection. As shown below, we can generate a semantic similar plagiarized image **without** knowing the prompt or watermarking methods of target image. More details can be seen in our [poster](https://github.com/zzzucf/Neural-Plagiarism/blob/main/images/iccv25_poster_neural_plagiarism.png) and [paper](https://openaccess.thecvf.com/content/ICCV2025/papers/Zou_Attention_to_Neural_Plagiarism_Diffusion_Models_Can_Plagiarize_Your_Copyrighted_ICCV_2025_paper.pdf).
-
-<p align="center">
-  <img src="https://github.com/zzzucf/Neural-Plagiarism/blob/main/images/attack_pipeline.png?raw=true" width="50%">
-</p>
-
-
-
-
-
-## For visible watermark, add large semantic alteration, 
-<pre>
-python optimize_latent_images_folder.py --target_folder YOUR_IMAGES_DIR_TO_BE_ATTACKED --gen_seed 0 --start 0 --end 1000 --gpu 0 --start_step 15 --k 25 45 --eps 10 --iters 10 --output_folder YOU_OUTPUT_DIR
-</pre>
-
-## For invisible watermark, add small unnoticeable noise,
-<pre>
-python optimize_latent_images_folder.py --target_folder YOUR_IMAGES_DIR_TO_BE_ATTACKED --gen_seed 0 --start 0 --end 1000 --gpu 0 --start_step 45 --k 47 --eps 10 --iters 10 --noisy_start --output_folder YOU_OUTPUT_DIR
-</pre>
+[Zihang Zou on Google Scholar](https://scholar.google.com/citations?user=GLuGAK0AAAAJ&hl=en) · [Research profile](https://github.com/zzzucf)
