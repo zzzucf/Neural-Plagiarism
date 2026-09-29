@@ -9,3 +9,6 @@ __pycache__/
 .DS_Store
 .ipynb_checkpoints/
 
+
+# Local experiment artifacts
+outputs/

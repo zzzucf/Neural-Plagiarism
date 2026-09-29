@@ -1,9 +1,14 @@
-import argparse
+from experiment_cli import parse_args
+
+# --help and --dry-run do not import the model stack.
+args, ori_img_paths = parse_args()
+
 import copy
 import os
 import warnings
-import glob
 from pathlib import Path
+import json
+from experiment_report import save_result
 import requests
 
 import torch
@@ -31,34 +36,6 @@ from utils.image_processing import tensor_to_pil
 
 # Ignore warnings for cleaner output.
 warnings.filterwarnings("ignore")
-
-# Parse command-line arguments.
-parser = argparse.ArgumentParser(description="Optimize latent images with watermarking")
-parser.add_argument('--target_folder', required=True, help='Folder containing target images')
-parser.add_argument('--start', type=int, default=0, help='Starting index for processing images')
-parser.add_argument('--end', type=int, default=10, help='Ending index for processing images')
-parser.add_argument('--gpu', type=int, default=0, help='GPU device index')
-parser.add_argument('--image_length', type=int, default=512, help='Length of the image (square assumed)')
-parser.add_argument('--model_id', default='Manojb/stable-diffusion-2-1-base', help='Model ID for the diffusion pipeline')
-parser.add_argument('--num_images', type=int, default=1, help='Number of images to generate per prompt')
-parser.add_argument('--guidance_scale', type=float, default=7.5, help='Guidance scale for stable diffusion')
-parser.add_argument('--num_inference_steps', type=int, default=50, help='Number of diffusion steps for inference')
-parser.add_argument('--attack_num_inference_steps', type=int, default=50, help='Number of steps for reverse diffusion')
-parser.add_argument('--output_folder', default='./outputs/', help='Folder for saving output images and logs')
-parser.add_argument('--start_step', type=int, default=0, help='Starting step for optimization.')
-parser.add_argument('--shortcut_step', type=int, default=-1, help='Build a shortcut from this step to step 0.')
-parser.add_argument('--iters', type=int, default=10, help='Number of optimization iterations')
-parser.add_argument('--lr', type=float, default=0.01, help='Learning rate for optimization')
-parser.add_argument('--gamma1', type=float, default=0.1, help='Weight for latent difference')
-parser.add_argument('--gamma2', type=float, default=1e5, help='Weight for semantic difference')
-parser.add_argument('--gamma3', type=float, default=1e-3, help='Weight for image difference')
-parser.add_argument('--eps', nargs='+', type=float, default=[10, 15], help='Selected bounds')
-parser.add_argument('--k', nargs='+', type=int, default=[25, 45], help='Selected timesteps')
-parser.add_argument('--watermark_text', type=str, default='test', help='Watermark key text')
-parser.add_argument('--watermark_method', default='dwtDctSvd', help='Watermarking method to use (e.g., "dwtDctSvd", "rivaGan")')
-parser.add_argument('--gen_seed', type=int, default=0, help='Seed for random generation of images')
-parser.add_argument('--decode_inv', action='store_true', help='Learn the VAE encoding by regression')
-args = parser.parse_args()
 
 class GaussianNoise(object):
     def __init__(self, mean=0.0, std=0.1):
@@ -115,6 +92,9 @@ os.makedirs(reversed_folder, exist_ok=True)
 # Set up logging.
 log = Log("{}/log.txt".format(args.output_folder))
 log.info("Arguments: {}".format(vars(args)))
+with open(os.path.join(args.output_folder, 'config.json'), 'w', encoding='utf-8') as config_file:
+    json.dump({'arguments': vars(args), 'inputs': ori_img_paths}, config_file, indent=2)
+results = []
 
 # Set device.
 device = "cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu"
@@ -152,9 +132,6 @@ set_random_seed(args.gen_seed)
 # attack_accuracies = []
 
 # Get list of original image paths.
-ori_img_paths = glob.glob(os.path.join(args.target_folder, '*.*'))
-ori_img_paths = sorted([path for path in ori_img_paths if path.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp', '.gif'))])
-ori_img_paths = ori_img_paths[args.start:args.end]
 log.info("Total images {}".format(len(ori_img_paths)))
 
 # Process images.
@@ -186,9 +163,13 @@ for i, ori_img_path in enumerate(ori_img_paths):
         do_classifier_free_guidance=True,
     ).detach()
 
-    target_img_pil = Image.open(ori_img_path)
-    target_img = transform_img(target_img_pil).unsqueeze(0).to(empty_embedding.dtype).to(device)
+    with Image.open(ori_img_path) as source_image:
+        target_img_pil = source_image.convert('RGB')
+    target_img = transform_img(target_img_pil, target_size=args.image_length).unsqueeze(0).to(empty_embedding.dtype).to(device)
     
+    input_path = os.path.join(args.output_folder, f"image_input_{i:04d}.png")
+    tensor_to_pil(target_img.detach())[0].save(input_path)
+
     # Set timesteps for reverse diffusion.
     pipe.scheduler.set_timesteps(args.attack_num_inference_steps, device=device)
     timesteps = pipe.scheduler.timesteps
@@ -236,7 +217,7 @@ for i, ori_img_path in enumerate(ori_img_paths):
         )
         reversed_image = outputs_reversed.images.detach()
         reversed_image_pil = tensor_to_pil(reversed_image)[0]
-        reversed_image_path = os.path.join(reversed_folder, f"image_{i:04d}.png")
+        reversed_image_path = os.path.join(reversed_folder, f"image_{i:04d}_{j:02d}.png")
         reversed_image_pil.save(reversed_image_path)
         
         # --- Reversed Image: Decode Watermark ---
@@ -319,6 +300,13 @@ for i, ori_img_path in enumerate(ori_img_paths):
         attack_filename = os.path.join(args.output_folder, f"image_attack_{i:04d}_{j:02d}.png")
         attack_image_w_pil = tensor_to_pil(outputs_attack.images.detach().cpu())[0]
         attack_image_w_pil.save(attack_filename)
+        results.append({
+            'source': os.path.basename(ori_img_path), 'seed': seed,
+            'input': os.path.basename(input_path),
+            'reconstruction': 'reversed/' + os.path.basename(reversed_image_path),
+            'output': os.path.basename(attack_filename),
+        })
+        save_result(args.output_folder, results)
         
         # decoded_wm_attack = wmarker.decode(attack_filename)
         # wm_bit_acc_attack, wm_success_attack = get_bit_acc_success(
